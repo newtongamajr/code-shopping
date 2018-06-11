@@ -3,6 +3,8 @@
 namespace CodeShopping\Http\Controllers\Api;
 
 use CodeShopping\Http\Requests\ProductRequest;
+use CodeShopping\Http\Resources\CategoryResource;
+use CodeShopping\Http\Resources\ProductResource;
 use CodeShopping\Models\Product;
 use Illuminate\Http\Request;
 use CodeShopping\Http\Controllers\Controller;
@@ -16,7 +18,8 @@ class ProductController extends Controller
    */
   public function index()
   {
-    return response(Product::all());
+    // Aqui se eu uso response(...) não fica na resposta da request as informações de links e meta. Porque?
+    return ProductResource::collection(Product::paginate(10));
   }
 
   /**
@@ -30,7 +33,7 @@ class ProductController extends Controller
     $product = Product::create($request->all());
     $product->refresh();
 
-    return response($product,201);
+    return response(new ProductResource($product),201);
   }
 
   /**
@@ -41,7 +44,7 @@ class ProductController extends Controller
    */
   public function show(Product $product)
   {
-    return response($product,200);
+    return response(new ProductResource($product),200);
   }
 
   /**
@@ -56,7 +59,7 @@ class ProductController extends Controller
     $product->fill($request->all());
     $product->save();
     $product->refresh();
-    return response($product,200);
+    return response(new ProductResource($product),200);
   }
 
   /**

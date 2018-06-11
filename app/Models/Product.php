@@ -20,4 +20,14 @@ class Product extends Model
   {
     return ['slug' => ['source' => 'name']];
   }
+
+  public function categories()
+  {
+    return $this->belongsToMany(Category::class)
+                ->using(CategoryProduct::class)
+                ->as('CategProd')
+                ->withPivot('coluna_exemplo')
+                ->withTimestamps(CategoryProduct::CREATED_AT, CategoryProduct::UPDATED_AT)
+                ->orderBy('category_id','asc');
+  }
 }
