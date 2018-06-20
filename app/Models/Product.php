@@ -30,4 +30,14 @@ class Product extends Model
                 ->withTimestamps(CategoryProduct::CREATED_AT, CategoryProduct::UPDATED_AT)
                 ->orderBy('category_id','asc');
   }
+
+  public function productInputs()
+  {
+    return $this->hasMany(ProductMovement::class);
+  }
+
+  public function photos()
+  {
+    return $this->hasMany(ProductPhoto::class);
+  }
 }

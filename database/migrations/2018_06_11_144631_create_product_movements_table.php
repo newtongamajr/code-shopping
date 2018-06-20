@@ -1,11 +1,11 @@
 <?php
 
-use CodeShopping\Models\ProductInput;
+use CodeShopping\Models\ProductMovement;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateProductInputsTable extends Migration
+class CreateProductMovementsTable extends Migration
 {
   /**
    * Run the migrations.
@@ -14,13 +14,14 @@ class CreateProductInputsTable extends Migration
    */
   public function up()
   {
-    Schema::create('product_inputs', function (Blueprint $table) {
+    Schema::create('product_movements', function (Blueprint $table) {
       $table->increments('id');
-      $table->integer('amount');
+      $table->string('movement_type',10);
+      $table->unsignedInteger('amount');
       $table->unsignedInteger('product_id');
       $table->foreign('product_id')->references('id')->on('products');
-      $table->timestamp(ProductInput::CREATED_AT)->nullable();
-      $table->timestamp(ProductInput::UPDATED_AT)->nullable();
+      $table->timestamp(ProductMovement::CREATED_AT)->nullable();
+      $table->timestamp(ProductMovement::UPDATED_AT)->nullable();
     });
   }
 
@@ -31,6 +32,6 @@ class CreateProductInputsTable extends Migration
    */
   public function down()
   {
-    Schema::dropIfExists('product_inputs');
+    Schema::dropIfExists('product_movements');
   }
 }

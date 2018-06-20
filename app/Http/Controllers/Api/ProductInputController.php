@@ -3,38 +3,47 @@
 namespace CodeShopping\Http\Controllers\Api;
 
 use CodeShopping\Http\Requests\ProductInputRequest;
-use CodeShopping\Http\Resources\ProductInputResource;
+use CodeShopping\Http\Resources\ProductMovementResource;
 use CodeShopping\Models\Product;
-use CodeShopping\Models\ProductInput;
 use CodeShopping\Http\Controllers\Controller;
+use CodeShopping\Models\ProductMovement;
 use Illuminate\Http\Request;
 
 class ProductInputController extends Controller
 {
   /**
-   * Efetua a entreada em estoque do produto em questão.
+   * Apresenta todas as entradas de estoque de forma paginada.
+   *
+   */
+  public function index()
+  {
+    $inputs = ProductMovement::with('product')->input()->paginate(10);  // eager loading com o uso do with ao invés de lazy...
+    return ProductMovementResource::collection($inputs);
+  }
+
+  /**
+   * Efetua a entrada em estoque do produto em questão.
    *
    * @param  ProductInputRequest  $request
    * @return \Illuminate\Http\Response
    */
   public function store(ProductInputRequest $request)
   {
-    $product = Product::find($request->product_id);
-    $product->stock += $request->amount;
-    $product->save();
-    return response(new ProductInputResource($product),201);
-
+    $input = ProductMovement::create($request->all()+['movement_type' => 'Entrada']);
+    return response(new ProductMovementResource($input),201);
   }
 
   /**
-   * Display the specified resource.
+   * Apresenta uma entrada de estoque específica. Caso a informação solicitada não seja uma entrada,
+   * apresentará valores nulos.
    *
-   * @param  \CodeShopping\Models\ProductInput $productInput
+   * @param  integer $productInput
    * @return \Illuminate\Http\Response
    */
-  public function show($productId)
+  public function show(ProductMovement $input)  // Esta variável deve ser sempre o nome colocado no recurso no singular
   {
-    $product = Product::find($productId);
-    return response(new ProductInputResource($product));
+    if ($input->movement_type !== 'Entrada')
+      $input = new ProductMovement();
+    return response(new ProductMovementResource($input));
   }
 }
