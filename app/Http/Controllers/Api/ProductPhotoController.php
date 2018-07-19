@@ -29,7 +29,8 @@ class ProductPhotoController extends Controller
    */
   public function store(ProductPhotoRequest $request, Product $product)
   {
-    return ProductPhoto::createWithPhotoFiles($product->id, $request->photos);
+    $photos = ProductPhoto::createWithPhotoFiles($product->id, $request->photos);
+    return new ProductPhotoCollection($photos,$product);
   }
 
   /**
@@ -39,8 +40,7 @@ class ProductPhotoController extends Controller
    */
   public function show(Product $product, ProductPhoto $photo)
   {
-    if ($photo->product_id != $product->id)
-      abort(404);
+    $this->validateProduct($product, $photo);
 
     return new ProductPhotoResource($photo);
   }
@@ -53,7 +53,8 @@ class ProductPhotoController extends Controller
    */
   public function substitute(ProductPhotoRequest $request, Product $product, ProductPhoto $photo)
   {
-    $photoSubstituted = ProductPhoto::substitutePhotoAndFile($photo,$request->photos);
+    $this->validateProduct($product, $photo);
+    $photoSubstituted = ProductPhoto::substitutePhotoAndFile($photo,$request->photo);
     return new ProductPhotoResource($photoSubstituted);
   }
 
@@ -64,7 +65,18 @@ class ProductPhotoController extends Controller
    */
   public function destroy(Product $product, ProductPhoto $photo)
   {
-    ProductPhoto::removePhotoAndFile($photo);
+    $this->validateProduct($product,$photo);
+    $photo->deletePhotoAndFile();
     return response([],204);
+  }
+
+  /**
+   * @param Product $product
+   * @param ProductPhoto $photo
+   */
+  private function validateProduct(Product $product, ProductPhoto $photo): void
+  {
+    if ($photo->product_id != $product->id)
+      abort(404);
   }
 }

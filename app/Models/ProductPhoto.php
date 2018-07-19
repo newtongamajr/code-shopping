@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace CodeShopping\Models;
 
+use Carbon\Carbon;
+use DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -16,6 +18,8 @@ class ProductPhoto extends Model
   const UPDATED_AT = 'dtAtualizacao';
   const DIR_PRODUCTS = 'products';
 
+  const DISK = 'public';
+
   /**
    * @param $productId
    * @return string
@@ -26,6 +30,11 @@ class ProductPhoto extends Model
     return "{$path}/{$productId}";
   }
 
+  public static function createDisk()
+  {
+    return Storage::disk(self::DISK);
+  }
+
   /**
    * @param string $photoPath
    * @param UploadedFile $file
@@ -33,7 +42,7 @@ class ProductPhoto extends Model
    */
   public static function createPhotoFile(string $photoPath, UploadedFile $file): string
   {
-    $disk = Storage::disk('public');
+    $disk = self::createDisk();
     return substr(strrchr($disk->putFile($photoPath,$file),'/'),1);
   }
 
@@ -49,33 +58,92 @@ class ProductPhoto extends Model
     {
       $uploadedFiles = [];
       $uploadedFiles = self::uploadFiles($productId,$files);
-      \DB::beginTransaction();
+      DB::beginTransaction();
       $photos = self::createPhotoModels($productId, $uploadedFiles);
-//      throw new Exception('Vamos interromper a bagaça');
-      \DB::commit();
+      DB::commit();
       return new Collection($photos);
     } catch (\Exception $e)
     {
       self::deleteFiles($productId,$uploadedFiles);
-      \DB::rollBack();
+      DB::rollBack();
       throw $e;
     }
   }
-  public static function substitutePhotoAndFile(ProductPhoto $photo, array $file)
+
+  /**
+   * Substituir a foto do produto no banco de dados e no diretório de fotos
+   * @param ProductPhoto $photo
+   * @param array $file
+   * @return ProductPhoto
+   * @throws \Exception
+   */
+  public static function substitutePhotoAndFile(ProductPhoto $photo, $file)
   {
     $uploadedFile = [];
-    self::deleteFiles($photo->product_id,array($photo->file_name));
-    $uploadedFile = self::uploadFiles($photo->product_id, $file);
-    $photo->file_name = implode('',$uploadedFile);
-    $photo->save();
-    return $photo;
+    try
+    {
+      list($originalFile, $renamedFile) = self::renamePhotoFile($photo);
+      $uploadedFile = self::uploadFiles($photo->product_id, [$file]);
+      DB::beginTransaction();
+      $photo->file_name = implode('',$uploadedFile);
+      $photo->save();
+      self::deleteRenamedFile($renamedFile);
+      DB::commit();
+      return $photo;
+    } catch (\Exception $e)
+    {
+      DB::rollBack();
+      self::returnRenamedFile($renamedFile,$originalFile);
+      throw $e;
+    }
   }
 
-  public static function removePhotoAndFile(ProductPhoto $photo)
+  /**
+   * Remove um arquivo renomeado, durante o processo de substituição ou exclusão
+   *
+   * @param string $renamedFile Nome do arquivo renomeado
+   * @return void
+   */
+  private static function deleteRenamedFile($renamedFile): void
   {
+    self::createDisk()->delete($renamedFile);
+  }
 
-    $photo->delete();
-    ProductPhoto::deleteFiles($photo->product_id,array($photo->file_name));
+  /**
+   * Retorna um arquivo renomeado, ao seu nome original em caso de falha durante o processo de substituição ou exclusão
+   *
+   * @param string $renamedFile Nome do arquivo renomeado
+   * @param string $originalFile Nome do arquivo original
+   * @return void
+   */
+  private static function returnRenamedFile($renamedFile, $originalFile ): void
+  {
+    self::createDisk()->move($renamedFile, $originalFile);
+  }
+
+  /**
+   * Remover a foto do produto no banco de dados e no diretório de fotos
+   * @param ProductPhoto $photo
+   * @param array $file
+   * @return ProductPhoto
+   * @throws \Exception
+   */
+  public function deletePhotoAndFile() : bool
+  {
+    try
+    {
+      list($originalFile, $renamedFile) = self::renamePhotoFile($this);
+      DB::beginTransaction();
+      $return = $this->delete();
+      self::deleteRenamedFile($renamedFile);
+      DB::commit();
+      return $return;
+    } catch (\Exception $e)
+    {
+      DB::rollBack();
+      self::returnRenamedFile($renamedFile,$originalFile);
+      throw $e;
+    }
   }
 
   /**
@@ -84,7 +152,7 @@ class ProductPhoto extends Model
    */
   public static function deleteFiles(int $productId, array $files)
   {
-    $disk = Storage::disk('public');
+    $disk = self::createDisk();
     foreach ($files as $file)
     {
       $path = self::getPhotoPath($productId);
@@ -156,6 +224,21 @@ class ProductPhoto extends Model
    */
   public function product()
   {
-    return $this->belongsTo(Product::class);
+    return $this->belongsTo(Product::class)->withTrashed();
+  }
+
+  /**
+   * Renomeia os arquivos em disco para substituição ou remoção
+   * @param ProductPhoto $photo
+   * @return array
+   */
+  private static function renamePhotoFile(ProductPhoto $photo): array
+  {
+    $photoPath = self::getPhotoPath($photo->product_id);
+    $dateTime = Carbon::now()->format('YmdHis');
+    $originalFile = "{$photoPath}/{$photo->file_name}";
+    $renamedFile = "{$photoPath}/{$photo->file_name}.{$dateTime}";
+    self::createDisk()->move($originalFile, $renamedFile);
+    return [$originalFile, $renamedFile];
   }
 }

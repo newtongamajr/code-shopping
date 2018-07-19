@@ -6,6 +6,7 @@ use CodeShopping\Http\Requests\ProductRequest;
 use CodeShopping\Http\Resources\CategoryResource;
 use CodeShopping\Http\Resources\ProductResource;
 use CodeShopping\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use CodeShopping\Http\Controllers\Controller;
 
@@ -19,7 +20,10 @@ class ProductController extends Controller
   public function index()
   {
     // Aqui se eu uso response(...) não fica na resposta da request as informações de links e meta. Porque?
-    return ProductResource::collection(Product::paginate(10));
+    $query = Product::query();
+    $query = $this->onlyTrashedIfRequested($query);
+    $products = $query->paginate(10);
+    return ProductResource::collection($products);
   }
 
   /**
@@ -74,4 +78,15 @@ class ProductController extends Controller
 
     return response([],204);
   }
+
+  private function  onlyTrashedIfRequested(Builder $query)
+  {
+    if (\Request::get('excluidos') == 1)
+    {
+      $query = $query->onlyTrashed();
+    }
+
+    return $query;
+  }
+
 }

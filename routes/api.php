@@ -25,4 +25,5 @@ Route::group(['namespace' => 'Api', 'as' => 'api.'], function ()
   Route::resource('products.photos','ProductPhotoController',['only' => ['index','show','store','destroy']]);
   Route::resource('inputs', 'ProductInputController', ['only' => ['index','show','store']]);
   Route::resource('outputs', 'ProductOutputController', ['only' => ['index','show','store']]);
+  Route::resource('users','UserController',['except' => ['create','edit']]);
 });

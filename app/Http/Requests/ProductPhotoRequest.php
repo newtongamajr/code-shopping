@@ -23,9 +23,24 @@ class ProductPhotoRequest extends FormRequest
    */
   public function rules()
   {
+    return !$this->route("photo")?$this->rulesCreate():$this->rulesSubstitute();
+  }
+
+  /**
+   * @return array
+   */
+  private function rulesCreate(): array
+  {
     return [
       'photos' => 'required|array',
-      'photos.*' => 'required|image|max:' . (3*1024), // 3Mb
+      'photos.*' => 'required|image|max:' . (3 * 1024), // 3Mb
+    ];
+  }
+
+  private function rulesSubstitute(): array
+  {
+    return [
+      'photo' => 'required|image|max:' . (3 * 1024), // 3Mb
     ];
   }
 }
