@@ -2,6 +2,7 @@
 
 namespace CodeShopping\Http\Controllers\Api;
 
+use CodeShopping\Events\UserCreatedEvent;
 use CodeShopping\Http\Requests\UserRequest;
 use CodeShopping\Http\Resources\UserResource;
 use CodeShopping\Models\User;
@@ -34,12 +35,9 @@ class UserController extends Controller
   public function store(UserRequest $request)
   {
     $requestData = $request->all();
-    $user = new User();
-    $user->name = $requestData['name'];
-    $user->email = $requestData['email'];
-    $user->password = bcrypt($requestData['password']);
-    $user->save();
+    $user = User::create($requestData);
     $user->refresh();
+    event(new UserCreatedEvent($user));
     return response(new UserResource($user),200);
   }
 
@@ -64,9 +62,7 @@ class UserController extends Controller
   public function update(UserRequest $request, User $user)
   {
     $requestData = $request->all();
-    $user->name = $requestData['name'];
-    $user->email = $requestData['email'];
-    $user->password = bcrypt($requestData['password']);
+    $user->fill($requestData);
     $user->save();
 
     return response(new UserResource($user),200);

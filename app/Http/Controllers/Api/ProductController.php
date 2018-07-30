@@ -67,6 +67,17 @@ class ProductController extends Controller
   }
 
   /**
+   * Restaura um produto que foi removido através de um 'soft delete'
+   *
+   * @param Product $product
+   */
+  public function restore(Product $product)
+  {
+    $product->restore();
+    return response()->json([],204);
+  }
+
+  /**
    * Remove the specified resource from storage.
    *
    * @param  \CodeShopping\Models\Product  $product
