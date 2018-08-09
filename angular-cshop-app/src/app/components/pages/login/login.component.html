@@ -1,0 +1,27 @@
+<div class="row">
+  <div class="col-md-4">
+  </div>
+  <div class="col-md-4">
+    <!-- Login form -->
+    <form (submit)="submit()">
+      <p class="h5 text-center mb-4">Acesso ao Code Shopping</p>
+      <div class="md-form">
+        <i class="fa fa-envelope prefix grey-text"></i>
+        <input type="text" name="email" id="loginEmail" class="form-control" mdbInputDirective [(ngModel)]="credenciais.email">
+        <label for="loginEmail">Seu e-mail</label>
+      </div>
+      <div class="md-form">
+        <i class="fa fa-lock prefix grey-text"></i>
+        <input type="password" name="password" id="loginPassword" class="form-control" mdbInputDirective [(ngModel)]="credenciais.password">
+        <label for="loginPassword">Senha</label>
+      </div>
+      <div class="text-center">
+        <input type="submit" mdbBtn color="default" sclass="waves-light" mdbWavesEffect value="Entrar">
+      </div>
+    </form>
+    {{credenciais | json}}
+    <!-- Login form -->
+  </div>
+  <div class="col-md-4">
+  </div>
+</div>

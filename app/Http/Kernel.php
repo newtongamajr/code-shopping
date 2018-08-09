@@ -19,6 +19,8 @@ class Kernel extends HttpKernel
     \CodeShopping\Http\Middleware\TrimStrings::class,
     \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
     \CodeShopping\Http\Middleware\TrustProxies::class,
+    // todo Para fazer uso das funcionalidades do Cors : https://github.com/barryvdh/laravel-cors
+    \CodeShopping\Http\Middleware\CorsMiddleware::class
   ];
 
   /**

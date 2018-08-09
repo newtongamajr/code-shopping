@@ -10,6 +10,9 @@
         "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
+        "@angular/common": "^6.1.0",
+        "@angular/compiler": "^6.1.0",
+        "@angular/core": "^6.1.0",
         "axios": "^0.18",
         "bootstrap": "^4.0.0",
         "popper.js": "^1.12",
@@ -18,5 +21,10 @@
         "laravel-mix": "^2.0",
         "lodash": "^4.17.4",
         "vue": "^2.5.7"
+    },
+    "dependencies": {
+        "chart.js": "^2.5.0",
+        "font-awesome": "^4.7.0",
+        "hammerjs": "^2.0.8"
     }
 }
